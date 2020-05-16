@@ -26,7 +26,7 @@ Resources:
       ## set up lifecyle policy
       # LifecyclePolicy: TBD
       ## Delete and instead create an output that will be used by the other CF stack - or read about best practice (nested stacks?)
-      RepositoryName: movieapi
+      RepositoryName: !Ref Name
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
@@ -58,5 +58,5 @@ Resources:
         - Key: Product
           Value: tbd
         - Key: Repo
-          Value: tbd
+          Value: https://github.com/wantedmedia/movieapi/branches
 

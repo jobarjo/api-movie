@@ -41,7 +41,7 @@ None.
 * ECR stack 
     - delete name (best practice as a name limits update possibilities) and review CF nested stacks / outputs best practices
     - add lifecyle policy
-* EC2 stack
+* ECS stack
     - use non default VPC / subnets
     - created and use custom security group
 * Review eslint policy with airbnb
