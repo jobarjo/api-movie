@@ -36,18 +36,3 @@ Resources:
           Value: tbd
         - Key: Repo
           Value: tbd
-
-  ############################
-  TaskRole:
-    Type: AWS::IAM::Role
-
-  ############################
-  S3LogsBucket:
-    Type: AWS::S3::Bucket
-
-  ContentBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-
-  ############################
-  SSMServiceName:
-    Type: AWS::SSM::Parameter
