@@ -20,14 +20,22 @@ Parameters:
     Default: "073919355633"
 
 Resources:
-  Service:
-    Type: AWS::ECS::Service
-
-  TaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-
-  LogGroup:
-    Type: AWS::Logs::LogGroup
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: ami-06ce3edf0cff21f07
+      InstanceType: t2.micro
+      Tags:
+        - Key: CreatedBy
+          Value: joelbarenco
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${Name}-ecr_repo-${Environment}
+        - Key: Product
+          Value: tbd
+        - Key: Repo
+          Value: tbd
 
   ############################
   TaskRole:

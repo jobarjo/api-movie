@@ -11,7 +11,7 @@ API retuning movie information from IMDB and film affinity.
 This service consists of the following stack(s):
 
 - ecr.yml: deploys an ECR repository for hosting the image of the service
-- ecs.yml: deploys the API service
+- ec2.yml: deploys the API service inside of an EC2 instance
 
 ## Depedencies
 
@@ -41,6 +41,9 @@ None.
 * ECR stack 
     - delete name (best practice as a name limits update possibilities) and review CF nested stacks / outputs best practices
     - add lifecyle policy
+* EC2 stack
+    - use non default VPC / subnets
+    - created and use custom security group
 * Review eslint policy with airbnb
 * Add unit tests
 * Scaling: ELB + route53 DNS alias
