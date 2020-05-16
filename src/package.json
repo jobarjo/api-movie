@@ -1,0 +1,28 @@
+{
+  "name": "api-movie",
+  "version": "0.0.1",
+  "description": "Wanted Movie API",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joelb01-github/movieapi"
+  },
+  "author": "Wanted Media ltd",
+  "contributors": [
+    "Joel Barenco <joel@wantvd.com>"
+  ],
+  "license": "TBD",
+  "dependencies": {
+    "imdb": "1.1.0",
+    "restify": "8.5.1",
+    "restify-errors": "8.0.2",
+    "serialize-error": "6.0.0"
+  },
+  "devDependencies": {
+    "eslint": "6.8.0"
+  }
+}

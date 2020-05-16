@@ -1,0 +1,62 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates the ECR repo that will host the code for the movie API service
+
+Parameters:
+  ProductionAccountId:
+    Type: String
+    Default: 073919355633
+  Name:
+    Type: String
+    Default: api-movie
+    Description: Name of the API to identify associated resources. 
+  Environment:
+    Type: String
+    Description: The deployment environment 
+    AllowedValues:
+      - dev
+      - uat
+      - prod
+    Default: prod
+
+Resources:
+  ECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      ## set up lifecyle policy
+      # LifecyclePolicy: TBD
+      ## Delete and instead create an output that will be used by the other CF stack - or read about best practice (nested stacks?)
+      RepositoryName: movieapi
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: GrantCrossAccount
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${ProductionAccountId}:root"
+            Action:
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:PutImage"
+              - "ecr:DescribeImages"
+              - "ecr:GetAuthorizationToken"
+              - "ecr:DescribeRepositories"
+              - "ecr:ListImages"
+              - "ecr:InitiateLayerUpload" 
+              - "ecr:UploadLayerPart"
+              - "ecr:CompleteLayerUpload"
+      Tags:
+        - Key: CreatedBy
+          Value: joelbarenco
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${Name}-ecr_repo-${Environment}
+        - Key: Product
+          Value: tbd
+        - Key: Repo
+          Value: tbd
+

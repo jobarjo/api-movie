@@ -1,0 +1,45 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Movie API ECS infrastructure'
+
+Parameters:
+  Name:
+    Type: String
+    Default: api-movie
+    Description: Name of the API to identify associated resources. 
+  Environment:
+    Type: String
+    Description: The deployment environment 
+    AllowedValues:
+      - dev
+      - uat
+      - prod
+  AwsAccountId:
+    Type: String
+    Description: AWS Elastic Load Balancing Account ID used to allow ELBs access to the S3 bucket storing the logs. Default value is for eu-west-1
+    Default: "073919355633"
+
+Resources:
+  Service:
+    Type: AWS::ECS::Service
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+
+  ############################
+  TaskRole:
+    Type: AWS::IAM::Role
+
+  ############################
+  S3LogsBucket:
+    Type: AWS::S3::Bucket
+
+  ContentBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+
+  ############################
+  SSMServiceName:
+    Type: AWS::SSM::Parameter
