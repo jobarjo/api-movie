@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Creates the ECR repo that will host the code for the movie API service
 
 Parameters:
-  ProductionAccountId:
+  AccountId:
     Type: String
     Default: 073919355633
   Name:
@@ -25,17 +25,14 @@ Resources:
     Properties:
       ## set up lifecyle policy
       # LifecyclePolicy: TBD
-      ## Delete and instead create an output that will be used by the other CF stack - or read about best practice (nested stacks?)
-      RepositoryName: !Ref Name
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
-          -
-            Sid: GrantCrossAccount
+          - Sid: GrantCrossAccount
             Effect: Allow
             Principal:
               AWS:
-                - !Sub "arn:aws:iam::${ProductionAccountId}:root"
+                - !Sub "arn:aws:iam::${AccountId}:root"
             Action:
               - "ecr:GetDownloadUrlForLayer"
               - "ecr:BatchGetImage"

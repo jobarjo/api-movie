@@ -25,6 +25,7 @@ if (require.main === module) {
     server = app(appConfig);
 
     server.listen(appConfig.server.port, () => {
+        console.log('url: ', appConfig.server.host);
         console.log('server listening', {server_url: server.url});
     });
 }
