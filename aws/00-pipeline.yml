@@ -30,7 +30,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       ArtifactStore:
-        Location: !Ref S3Bucket
+        Location: !Ref ArtifactStoreS3Bucket
         Type: S3
       Name: !Sub "${ProjectName}-codePipeline-${DevEnvironment}"
       RoleArn: !GetAtt CodePipelineRole.Arn
@@ -44,10 +44,10 @@ Resources:
                 Category: Source
                 Owner: ThirdParty
                 Provider: GitHub
-                Version: 1
+                Version: "1"
               Configuration:
                 Owner: "joelb01-github"
-                Repo: "movieapi"
+                Repo: !Ref Repo
                 Branch: !Ref BranchName
                 OAuthToken: !Ref GithubOAuthToken
                 PollForSourceChanges: False
@@ -62,7 +62,7 @@ Resources:
                 Category: Deploy
                 Owner: AWS
                 Provider: CloudFormation
-                Version: 1
+                Version: "1"
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: !Sub "${ProjectName}-pipeline-${BranchName}"
@@ -85,7 +85,7 @@ Resources:
                 Category: Deploy
                 Owner: AWS
                 Provider: CloudFormation
-                Version: 1
+                Version: "1"
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: !Sub "${ProjectName}-infrastructure-${BranchName}"
@@ -107,7 +107,7 @@ Resources:
         #         Category: Deploy
         #         Owner: AWS
         #         Provider: CloudFormation
-        #         Version: 1
+        #         Version: "1"
         #       Configuration:
         #         ActionMode: CREATE_UPDATE
         #         StackName: !Sub "${ProjectName}-codebuild-${BranchName}"
@@ -129,7 +129,7 @@ Resources:
         #         Category: Build
         #         Owner: AWS
         #         Provider: CodeBuild
-        #         Version: 1
+        #         Version: "1"
         #       Configuration:
         #         ProjectName: !Sub ${ProjectName}-${BranchName}
         #         EnvironmentVariables: !Sub |
@@ -150,7 +150,7 @@ Resources:
         #         Category: Deploy
         #         Owner: AWS
         #         Provider: CloudFormation
-        #         Version: 1
+        #         Version: "1"
         #       Configuration:
         #         ActionMode: CREATE_UPDATE
         #         StackName: !Sub "${ProjectName}-services-${BranchName}"
