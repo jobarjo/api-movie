@@ -1,0 +1,83 @@
+Description: "Docker Repo"
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  ProjectName:
+    Type: String
+  BranchName:
+    Type: String
+
+Resources:
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref ProjectName
+
+  CommunicatorDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Status: Enabled
+            NoncurrentVersionTransitions:
+              - StorageClass: DEEP_ARCHIVE
+                TransitionInDays: 0
+
+  CommunicatorBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  CommunicatorDataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CommunicatorDataBucket
+      PolicyDocument:
+        Fn::Sub:
+          - |
+            {
+              "Version": "2012-10-17",
+              "Id": "PutObjPolicy",
+              "Statement": [
+                {
+                  "Sid": "DenyUnencryptedObjectUploads",
+                  "Effect": "Deny",
+                  "Principal": "*",
+                  "Action": "s3:PutObject",
+                  "Resource": "${BucketArn}/*",
+                  "Condition": {
+                    "Null": {
+                      "s3:x-amz-server-side-encryption": true
+                    }
+                  }
+                }
+              ]
+            }
+          - BucketArn: !GetAtt CommunicatorDataBucket.Arn
+
+Outputs:
+  CommunicatorDataBucket:
+    Description: Communicator Ingestion Bucket
+    Value: !Ref CommunicatorDataBucket
+    Export:
+      Name: !Sub CommunicatorDataBucket-${BranchName}
+  CommunicatorBucket:
+    Description: Communicator Ingestion Bucket
+    Value: !Ref CommunicatorBucket
+    Export:
+      Name: !Sub CommunicatorBucket-${BranchName}

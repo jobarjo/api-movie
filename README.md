@@ -21,6 +21,8 @@ None.
 
 Manual.
 
+- each push will trigger [codeBuild](ci/codebuild/).
+
 ## Monitoring
 
 None.

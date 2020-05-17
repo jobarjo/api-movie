@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  ProjectName:
+    Type: String
+  BranchName:
+    Type: String
+
+Resources:
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Ref ProjectName
+      Artifacts:
+        Type: CODEPIPELINE
+      Description: 'Package jar and deploy container'
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:2.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: RESOURCES_BUCKET
+            Type: PLAINTEXT
+            Value:
+              Fn::ImportValue: !Sub CommunicatorBucket-${BranchName}
+          - Name: DOCKER_CONTAINER_NAME
+            Type: PLAINTEXT
+            Value: !Ref ProjectName
+          - Name: AWS_ACCOUNT_NUMBER
+            Type: PLAINTEXT
+            Value: !Ref AWS::AccountId
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source:
+        Type: CODEPIPELINE
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+        - PolicyName: code-build
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:*
+                Resource: "*"

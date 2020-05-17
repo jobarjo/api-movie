@@ -1,0 +1,98 @@
+Description: "Communicator Ingester"
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  ProjectName:
+    Type: String
+  BranchName:
+    Type: String
+
+Resources:
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        #  restrict to just communicator parameters
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+      Policies:
+        - PolicyName: task
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                Resource:
+                  - !Sub
+                    - arn:aws:s3:::${BucketName}/*
+                    - BucketName:
+                        Fn::ImportValue: !Sub CommunicatorDataBucket-${BranchName}
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 30
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+
+#512MB, 1GB, 2GB — Available cpu values: 256 (.25 vCPU)
+#1GB, 2GB, 3GB, 4GB — Available cpu values: 512 (.5 vCPU)
+#2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB — Available cpu values: 1024 (1 vCPU)
+#Between 4GB and 16GB in 1GB increments — Available cpu values: 2048 (2 vCPU)
+#Between 8GB and 30GB in 1GB increments — Available cpu values: 4096 (4 vCPU)
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ExecutionRoleArn: !GetAtt Role.Arn
+      TaskRoleArn: !GetAtt Role.Arn
+      Family: !Sub "${ProjectName}-task-${BranchName}"
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Memory: 4096
+      Cpu: 1024
+      ContainerDefinitions:
+        - Environment:
+            - Name: DATA_BUCKET
+              Value:
+                Fn::ImportValue: !Sub CommunicatorDataBucket-${BranchName}
+            - Name: BUCKET_PATH
+              Value: "temp"
+            - Name: FILE_NAME
+              Value: ""
+            - Name: CREDENTIALS_PREFIX
+              Value: "/dev/communicator/sftp"
+          Image: !Sub  "${AWS::AccountId}.dkr.ecr.eu-west-1.amazonaws.com/${ProjectName}-${BranchName}:latest"
+          Memory: 4096
+          Cpu: 1024
+          Name: CommunicatorIngester
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: '/aws/ecs'
+
+Outputs:
+  CommunicatorIngesterIngestTask:
+    Description: Communicator Ingester Ingest Task Name
+    Value: !Sub "${ProjectName}-task-${BranchName}"
+    Export:
+      Name: CommunicatorIngesterIngestTask
+
+  CommunicatorIngesterClusterArn:
+    Description: Communicator Ingester Cluster Arn
+    Value: !GetAtt Cluster.Arn
+    Export:
+      Name: CommunicatorIngesterClusterArn
