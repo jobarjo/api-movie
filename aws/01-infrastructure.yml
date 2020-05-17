@@ -1,0 +1,35 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Docker Repo"
+
+Parameters:
+  ProjectName:
+    Type: String
+  BranchName:
+    Type: String
+
+Resources:
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      # LifecyclePolicy: TBD
+      Tags:
+        - Key: CreatedBy
+          Value: joelbarenco
+        - Key: Environment
+          Value: !Ref DevEnvironment
+        - Key: Name
+          Value: !Sub ${ProjectName}-ECRRepository-${DevEnvironment}
+        - Key: Product
+          Value: tbd
+        - Key: Project
+          Value: !Sub ${ProjectName}
+        - Key: Repo
+          Value: https://github.com/wantedmedia/movieapi
+
+Outputs:
+  ECRRepository:
+    Description: "Name of the ECR repo"
+    Value: !Ref ECRRepository
+    Export:
+      Name: !Sub ${ProjectName}-ECRRepository-${BranchName}

@@ -1,0 +1,265 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Deployment pipeline"
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: "api-movie"
+  BranchName:
+    Type: String
+    Default: "master"
+  Repo:
+    Type: String
+    Default: "movieapi"
+  DevEnvironment:
+    Type: String
+    Description: "The deployment environment" 
+    AllowedValues:
+      - "dev"
+      - "uat"
+      - "prod"
+    Default: "prod"
+  GithubOAuthToken:
+    ## check: https://docs.aws.amazon.com/codepipeline/latest/userguide/GitHub-create-personal-token-CLI.html
+    Description: "The github OAUTH token to give codepipeline access to the gihub repo. To be provided when launching pipeline on the CLI" 
+    Type: String
+
+Resources:
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref S3Bucket
+        Type: S3
+      Name: !Sub "${ProjectName}-codePipeline-${DevEnvironment}"
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      RestartExecutionOnUpdate: true
+      Stages:
+        - Name: "Source"
+          Actions:
+            - Name: "SourceCode"
+              Namespace: SourceVariables
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              Configuration:
+                Owner: "joelb01-github"
+                Repo: "movieapi"
+                Branch: !Ref BranchName
+                OAuthToken: !Ref GithubOAuthToken
+                PollForSourceChanges: False
+              OutputArtifacts:
+                - Name: !Ref ProjectName
+              RunOrder: 1
+        # needed?
+        - Name: "Deploy-Pipeline"
+          Actions:
+            - Name: "Deploy-Pipeline"
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub "${ProjectName}-pipeline-${BranchName}"
+                Capabilities: "CAPABILITY_NAMED_IAM"
+                RoleArn: !GetAtt DeployRole.Arn
+                TemplatePath: !Sub "${ProjectName}::aws/00-pipeline.yml"
+                # needed?
+                ParameterOverrides: !Sub |
+                  {
+                    "BranchName": "${BranchName}",
+                    "GithubOAuthToken": "${GithubOAuthToken}"
+                  }
+              InputArtifacts:
+                - Name: !Ref ProjectName
+              RunOrder: 1
+        - Name: "Deploy-Infrastructure"
+          Actions:
+            - Name: "Deploy-Infrastructure"
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub "${ProjectName}-infrastructure-${BranchName}"
+                TemplatePath: !Sub "${ProjectName}::aws/01-infrastructure.yml"
+                RoleArn: !GetAtt DeployRole.Arn
+                ParameterOverrides: !Sub |
+                  {
+                    "BranchName": "${BranchName}",
+                    "ProjectName": "${ProjectName}",
+                    "DevEnvironment": "${DevEnvironment}"
+                  }
+              InputArtifacts:
+                - Name: !Ref ProjectName
+              RunOrder: 1
+        # - Name: "Deploy-CodeBuild"
+        #   Actions:
+        #     - Name: "Deploy-CodeBuild"
+        #       ActionTypeId:
+        #         Category: Deploy
+        #         Owner: AWS
+        #         Provider: CloudFormation
+        #         Version: 1
+        #       Configuration:
+        #         ActionMode: CREATE_UPDATE
+        #         StackName: !Sub "${ProjectName}-codebuild-${BranchName}"
+        #         TemplatePath: !Sub "${ProjectName}::aws/02-build.yml"
+        #         Capabilities: "CAPABILITY_NAMED_IAM"
+        #         RoleArn: !GetAtt DeployRole.Arn
+        #         ParameterOverrides: !Sub |
+        #           {
+        #             "ProjectName": "${ProjectName}-${BranchName}",
+        #             "BranchName": "${BranchName}"
+        #           }
+        #       InputArtifacts:
+        #         - Name: !Ref ProjectName
+        #       RunOrder: 2
+        # - Name: "Build-Docker-Containers"
+        #   Actions:
+        #     - Name: "Build-Docker-Containers"
+        #       ActionTypeId:
+        #         Category: Build
+        #         Owner: AWS
+        #         Provider: CodeBuild
+        #         Version: 1
+        #       Configuration:
+        #         ProjectName: !Sub ${ProjectName}-${BranchName}
+        #         EnvironmentVariables: !Sub |
+        #           [
+        #             {
+        #               "name": "COMMIT_HASH",
+        #               "value": "#{SourceVariables.CommitId}",
+        #               "type": "PLAINTEXT"
+        #             }
+        #           ]
+        #       InputArtifacts:
+        #         - Name: !Ref ProjectName
+        #       RunOrder: 2
+        # - Name: "Deploy-Services"
+        #   Actions:
+        #     - Name: "Deploy-Services"
+        #       ActionTypeId:
+        #         Category: Deploy
+        #         Owner: AWS
+        #         Provider: CloudFormation
+        #         Version: 1
+        #       Configuration:
+        #         ActionMode: CREATE_UPDATE
+        #         StackName: !Sub "${ProjectName}-services-${BranchName}"
+        #         TemplatePath: !Sub "${ProjectName}::aws/03-services.yml"
+        #         Capabilities: "CAPABILITY_NAMED_IAM"
+        #         RoleArn: !GetAtt DeployRole.Arn
+        #         ParameterOverrides: !Sub |
+        #           {
+        #             "ProjectName": "${ProjectName}",
+        #             "BranchName": "${BranchName}"
+        #           }
+        #       InputArtifacts:
+        #         - Name: !Ref ProjectName
+        #       RunOrder: 3
+      Tags:
+        - Key: CreatedBy
+          Value: joelbarenco
+        - Key: Environment
+          Value: !Ref DevEnvironment
+        - Key: Name
+          Value: !Sub ${ProjectName}-codePipeline-${DevEnvironment}
+        - Key: Product
+          Value: tbd
+        - Key: Project
+          Value: !Sub ${ProjectName}
+        - Key: Repo
+          Value: https://github.com/wantedmedia/movieapi
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: code-pipeline
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                  - cloudwatch:*
+                  - cloudformation:*
+                  - iam:PassRole
+                  - codebuild:*
+                  - codestar-connections:*
+                Resource: "*"
+      Tags:
+        - Key: CreatedBy
+          Value: joelbarenco
+        - Key: Environment
+          Value: !Ref DevEnvironment
+        - Key: Name
+          Value: !Sub ${ProjectName}-codePipelineIAMRole-${DevEnvironment}
+        - Key: Product
+          Value: tbd
+        - Key: Project
+          Value: !Sub ${ProjectName}
+        - Key: Repo
+          Value: https://github.com/wantedmedia/movieapi
+
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+                - cloudformation.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: CreatedBy
+          Value: joelbarenco
+        - Key: Environment
+          Value: !Ref DevEnvironment
+        - Key: Name
+          Value: !Sub ${ProjectName}-codeDeployIAMRole-${DevEnvironment}
+        - Key: Product
+          Value: tbd
+        - Key: Project
+          Value: !Sub ${ProjectName}
+        - Key: Repo
+          Value: https://github.com/wantedmedia/movieapi
+
+  ArtifactStoreS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+        - Key: CreatedBy
+          Value: joelbarenco
+        - Key: Environment
+          Value: !Ref DevEnvironment
+        - Key: Name
+          Value: !Sub ${ProjectName}-artifactStoreS3Bucket-${DevEnvironment}
+        - Key: Product
+          Value: tbd
+        - Key: Project
+          Value: !Sub ${ProjectName}
+        - Key: Repo
+          Value: https://github.com/wantedmedia/movieapi
