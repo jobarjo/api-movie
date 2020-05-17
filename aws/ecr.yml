@@ -10,7 +10,7 @@ Parameters:
     Type: String
     Default: api-movie
     Description: Name of the API to identify associated resources. 
-  Environment:
+  DevEnvironment:
     Type: String
     Description: The deployment environment 
     AllowedValues:
@@ -49,11 +49,11 @@ Resources:
         - Key: CreatedBy
           Value: joelbarenco
         - Key: Environment
-          Value: !Ref Environment
+          Value: !Ref DevEnvironment
         - Key: Name
-          Value: !Sub ${Name}-ecr_repo-${Environment}
+          Value: !Sub ${Name}-ecr_repo-${DevEnvironment}
         - Key: Product
           Value: tbd
         - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi/branches
+          Value: https://github.com/wantedmedia/movieapi
 

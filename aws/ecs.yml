@@ -7,7 +7,7 @@ Parameters:
     Type: String
     Default: api-movie
     Description: Name of the API to identify associated resources. 
-  Environment:
+  DevEnvironment:
     Type: String
     Description: The deployment environment 
     AllowedValues:
@@ -29,13 +29,13 @@ Resources:
         - Key: CreatedBy
           Value: joelbarenco
         - Key: Environment
-          Value: !Ref Environment
+          Value: !Ref DevEnvironment
         - Key: Name
-          Value: !Sub ${Name}-ecs_cluster-${Environment}
+          Value: !Sub ${Name}-ecs_cluster-${DevEnvironment}
         - Key: Product
           Value: tbd
         - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi/branches
+          Value: https://github.com/wantedmedia/movieapi
 
   ECSService:
     Type: AWS::ECS::Service
@@ -49,13 +49,13 @@ Resources:
         - Key: CreatedBy
           Value: joelbarenco
         - Key: Environment
-          Value: !Ref Environment
+          Value: !Ref DevEnvironment
         - Key: Name
-          Value: !Sub ${Name}-ecs_service-${Environment}
+          Value: !Sub ${Name}-ecs_service-${DevEnvironment}
         - Key: Product
           Value: tbd
         - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi/branches
+          Value: https://github.com/wantedmedia/movieapi
 
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -70,7 +70,7 @@ Resources:
             - Name: NODE_ENV
               Value: production
             - Name: TM_ENV
-              Value: !Ref Environment
+              Value: !Ref DevEnvironment
             - Name: SERVER_NAME
               Value: !Ref Name
           PortMappings:
@@ -84,18 +84,18 @@ Resources:
         - Key: CreatedBy
           Value: joelbarenco
         - Key: Environment
-          Value: !Ref Environment
+          Value: !Ref DevEnvironment
         - Key: Name
-          Value: !Sub ${Name}-ecs_task_definition-${Environment}
+          Value: !Sub ${Name}-ecs_task_definition-${DevEnvironment}
         - Key: Product
           Value: tbd
         - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi/branches
+          Value: https://github.com/wantedmedia/movieapi
         
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/ecs/${Name}-${Environment}
+      LogGroupName: !Sub /aws/ecs/${Name}-${DevEnvironment}
       RetentionInDays: 15
 
   ECSTaskRole:
@@ -129,10 +129,10 @@ Resources:
         - Key: CreatedBy
           Value: joelbarenco
         - Key: Environment
-          Value: !Ref Environment
+          Value: !Ref DevEnvironment
         - Key: Name
-          Value: !Sub ${Name}-ecs_task_role-${Environment}
+          Value: !Sub ${Name}-ecs_task_role-${DevEnvironment}
         - Key: Product
           Value: tbd
         - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi/branches    
+          Value: https://github.com/wantedmedia/movieapi    
