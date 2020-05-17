@@ -40,12 +40,8 @@ None.
 ## Todo list
 
 * Set up a custom VPC with custom public subnets for the API
-* ECR stack 
-    - delete name (best practice as a name limits update possibilities) and review CF nested stacks / outputs best practices
-    - add lifecyle policy
-* ECS stack
-    - use non default VPC / subnets
-    - created and use custom security group
+* Pipeline.yml
+  - Create a machine user to limit access to github
 * Review eslint policy with airbnb
 * Add unit tests
 * Scaling: ELB + route53 DNS alias
