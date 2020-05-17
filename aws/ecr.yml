@@ -25,27 +25,6 @@ Resources:
     Properties:
       ## set up lifecyle policy
       # LifecyclePolicy: TBD
-      RepositoryPolicyText:
-        Version: "2012-10-17"
-        Statement:
-          - 
-            Sid: GrantCrossAccount
-            Effect: Allow
-            Principal:
-              AWS:
-                - !Sub "arn:aws:iam::${AccountId}:root"
-            Action:
-              - "ecr:GetDownloadUrlForLayer"
-              - "ecr:BatchGetImage"
-              - "ecr:BatchCheckLayerAvailability"
-              - "ecr:PutImage"
-              - "ecr:DescribeImages"
-              - "ecr:GetAuthorizationToken"
-              - "ecr:DescribeRepositories"
-              - "ecr:ListImages"
-              - "ecr:InitiateLayerUpload" 
-              - "ecr:UploadLayerPart"
-              - "ecr:CompleteLayerUpload"
       Tags:
         - Key: CreatedBy
           Value: joelbarenco
