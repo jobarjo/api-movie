@@ -28,7 +28,8 @@ Resources:
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
-          - Sid: GrantCrossAccount
+          - 
+            Sid: GrantCrossAccount
             Effect: Allow
             Principal:
               AWS:
