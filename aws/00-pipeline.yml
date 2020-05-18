@@ -55,29 +55,29 @@ Resources:
                 - Name: !Ref ProjectName
               RunOrder: 1
         # needed?
-        - Name: "Deploy-Pipeline"
-          Actions:
-            - Name: "Deploy-Pipeline"
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: "1"
-              Configuration:
-                ActionMode: CREATE_UPDATE
-                StackName: !Sub "${ProjectName}-pipeline-${BranchName}"
-                Capabilities: "CAPABILITY_NAMED_IAM"
-                RoleArn: !GetAtt DeployRole.Arn
-                TemplatePath: !Sub "${ProjectName}::aws/00-pipeline.yml"
-                # needed?
-                ParameterOverrides: !Sub |
-                  {
-                    "BranchName": "${BranchName}",
-                    "GithubOAuthToken": "${GithubOAuthToken}"
-                  }
-              InputArtifacts:
-                - Name: !Ref ProjectName
-              RunOrder: 1
+        # - Name: "Deploy-Pipeline"
+        #   Actions:
+        #     - Name: "Deploy-Pipeline"
+        #       ActionTypeId:
+        #         Category: Deploy
+        #         Owner: AWS
+        #         Provider: CloudFormation
+        #         Version: "1"
+        #       Configuration:
+        #         ActionMode: CREATE_UPDATE
+        #         StackName: !Sub "${ProjectName}-pipeline-${BranchName}"
+        #         Capabilities: "CAPABILITY_NAMED_IAM"
+        #         RoleArn: !GetAtt DeployRole.Arn
+        #         TemplatePath: !Sub "${ProjectName}::aws/00-pipeline.yml"
+        #         # needed?
+        #         ParameterOverrides: !Sub |
+        #           {
+        #             "BranchName": "${BranchName}",
+        #             "GithubOAuthToken": "${GithubOAuthToken}"
+        #           }
+        #       InputArtifacts:
+        #         - Name: !Ref ProjectName
+        #       RunOrder: 1
         - Name: "Deploy-Infrastructure"
           Actions:
             - Name: "Deploy-Infrastructure"
