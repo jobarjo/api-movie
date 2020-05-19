@@ -1,13 +1,11 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: "Docker Repo"
+Description: "Deploy AWS infrastructure: ECR repo"
 
 Parameters:
   ProjectName:
     Type: String
   BranchName:
-    Type: String
-  DevEnvironment:
     Type: String
     Description: "The deployment environment" 
     AllowedValues:
@@ -24,9 +22,9 @@ Resources:
         - Key: CreatedBy
           Value: joelbarenco
         - Key: Environment
-          Value: !Ref DevEnvironment
+          Value: !Ref BranchName
         - Key: Name
-          Value: !Sub ${ProjectName}-ECRRepository-${DevEnvironment}
+          Value: !Sub ${ProjectName}-ECRRepository-${BranchName}
         - Key: Product
           Value: tbd
         - Key: Project
@@ -40,3 +38,5 @@ Outputs:
     Value: !Ref ECRRepository
     Export:
       Name: !Sub ${ProjectName}-ECRRepository-${BranchName}
+
+# output sample: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/continuous-delivery-codepipeline-parameter-override-functions.html

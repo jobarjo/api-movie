@@ -1,38 +1,63 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
+Description: "Docker Repo"
 
 Parameters:
   ProjectName:
     Type: String
   BranchName:
     Type: String
+    Description: "The deployment environment" 
+    AllowedValues:
+      - "dev"
+      - "uat"
+      - "prod"
+  ECRRepositoryName:
+    Type: String
+    Description: "ECR repository where to push the docker image"
 
 Resources:
   CodeBuild:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Ref ProjectName
       Artifacts:
         Type: CODEPIPELINE
-      Description: 'Package jar and deploy container'
+      Description: 'Build and deploy container to ECR'
       Environment:
-        Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
         Image: aws/codebuild/amazonlinux2-x86_64-standard:2.0
         PrivilegedMode: true
         EnvironmentVariables:
-          - Name: RESOURCES_BUCKET
+          - Name: IMAGE_REPO_NAME
             Type: PLAINTEXT
-            Value:
-              Fn::ImportValue: !Sub CommunicatorBucket-${BranchName}
-          - Name: DOCKER_CONTAINER_NAME
+            Value: !Ref ECRRepositoryName
+          - Name: IMAGE_TAG
             Type: PLAINTEXT
-            Value: !Ref ProjectName
-          - Name: AWS_ACCOUNT_NUMBER
+            Value: "latest"
+          - Name: AWS_ACCOUNT_ID
             Type: PLAINTEXT
             Value: !Ref AWS::AccountId
+          - Name: AWS_DEFAULT_REGION
+            Type: PLAINTEXT
+            Value: !Ref AWS::Region
+      Name: !Sub "${ProjectName}-build-${BranchName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source:
         Type: CODEPIPELINE
+      Tags:
+        - Key: CreatedBy
+          Value: joelbarenco
+        - Key: Environment
+          Value: !Ref BranchName
+        - Key: Name
+          Value: !Sub ${ProjectName}-codeBuildProject-${BranchName}
+        - Key: Product
+          Value: tbd
+        - Key: Project
+          Value: !Sub ${ProjectName}
+        - Key: Repo
+          Value: https://github.com/wantedmedia/movieapi
 
   CodeBuildRole:
     Type: AWS::IAM::Role
@@ -58,3 +83,16 @@ Resources:
                 Action:
                   - ecr:*
                 Resource: "*"
+      Tags:
+        - Key: CreatedBy
+          Value: joelbarenco
+        - Key: Environment
+          Value: !Ref BranchName
+        - Key: Name
+          Value: !Sub ${ProjectName}-codeBuildIAMRole-${BranchName}
+        - Key: Product
+          Value: tbd
+        - Key: Project
+          Value: !Sub ${ProjectName}
+        - Key: Repo
+          Value: https://github.com/wantedmedia/movieapi
