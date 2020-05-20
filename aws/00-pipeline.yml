@@ -96,7 +96,7 @@ Resources:
                       "Fn::GetParam" : [
                         "InfrastructureOutput",
                         "InfrastructureOutput.json",
-                        "${ProjectName}-ECRRepository-${BranchName}"
+                        !Sub "${ProjectName}-ECRRepository-${BranchName}"
                       ]
                     }
                   }
