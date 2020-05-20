@@ -21,14 +21,12 @@ Resources:
       Tags:
         - Key: CreatedBy
           Value: joelbarenco
-        - Key: Environment
-          Value: !Ref BranchName
-        - Key: Name
-          Value: !Sub ${ProjectName}-ECRRepository-${BranchName}
         - Key: Product
           Value: tbd
         - Key: Project
-          Value: !Sub ${ProjectName}
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref BranchName
         - Key: Repo
           Value: https://github.com/wantedmedia/movieapi
 
