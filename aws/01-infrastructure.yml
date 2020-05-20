@@ -31,10 +31,10 @@ Resources:
           Value: https://github.com/wantedmedia/movieapi
 
 Outputs:
-  ECRRepository:
+  ECRRepositoryName:
     Description: "Name of the ECR repo"
     Value: !Ref ECRRepository
     Export:
-      Name: ECRRepositoryName
+      Name: !Sub ${ProjectName}-ECRRepositoryName-${BranchName}
 
 # output sample: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/continuous-delivery-codepipeline-parameter-override-functions.html
