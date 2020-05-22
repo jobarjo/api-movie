@@ -1,5 +1,6 @@
-Description: "Communicator Ingester"
+---
 AWSTemplateFormatVersion: '2010-09-09'
+Description: "Movie API"
 
 Parameters:
   ProjectName:

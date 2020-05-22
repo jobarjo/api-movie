@@ -104,27 +104,6 @@ Resources:
                 - Name: !Ref ProjectName
                 - Name: InfrastructureOutput
               RunOrder: 2
-        # - Name: "Build-Docker-Containers"
-        #   Actions:
-        #     - Name: "Build-Docker-Containers"
-        #       ActionTypeId:
-        #         Category: Build
-        #         Owner: AWS
-        #         Provider: CodeBuild
-        #         Version: "1"
-        #       Configuration:
-        #         ProjectName: !Sub ${ProjectName}-${BranchName}
-        #         EnvironmentVariables: !Sub |
-        #           [
-        #             {
-        #               "name": "COMMIT_HASH",
-        #               "value": "#{SourceVariables.CommitId}",
-        #               "type": "PLAINTEXT"
-        #             }
-        #           ]
-        #       InputArtifacts:
-        #         - Name: !Ref ProjectName
-        #       RunOrder: 2
         # - Name: "Deploy-Services"
         #   Actions:
         #     - Name: "Deploy-Services"
@@ -135,7 +114,7 @@ Resources:
         #         Version: "1"
         #       Configuration:
         #         ActionMode: CREATE_UPDATE
-        #         StackName: !Sub "${ProjectName}-services-${BranchName}"
+        #         StackName: !Sub "${ProjectName}-deployServices-${BranchName}"
         #         TemplatePath: !Sub "${ProjectName}::aws/03-services.yml"
         #         Capabilities: "CAPABILITY_NAMED_IAM"
         #         RoleArn: !GetAtt DeployRole.Arn
