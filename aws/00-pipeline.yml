@@ -104,6 +104,19 @@ Resources:
                 - Name: !Ref ProjectName
                 - Name: InfrastructureOutput
               RunOrder: 2
+        - Name: "Build-Docker-Container"
+          Actions:
+            - Name: "Build-Docker-Container"
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !Sub ${ProjectName}-build-${BranchName}
+              InputArtifacts:
+                - Name: !Ref ProjectName
+              RunOrder: 2
         # - Name: "Deploy-Services"
         #   Actions:
         #     - Name: "Deploy-Services"
