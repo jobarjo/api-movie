@@ -1,5 +1,5 @@
 {
-  "name": "api-movie",
+  "name": "be-api-movie",
   "version": "0.0.1",
   "description": "Wanted Movie API",
   "main": "index.js",

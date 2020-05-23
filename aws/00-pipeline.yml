@@ -5,7 +5,7 @@ Description: "Deployment pipeline"
 Parameters:
   ProjectName:
     Type: String
-    Default: "api-movie"
+    Default: "be-api-movie"
   BranchName:
     Type: String
     Description: "The deployment environment" 
