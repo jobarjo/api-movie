@@ -23,8 +23,6 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties: 
-      ClusterSettings: 
-        - ClusterSettings
       Tags:
         - Key: CreatedBy
           Value: joelbarenco
@@ -40,8 +38,8 @@ Resources:
   ECSService:
     Type: AWS::ECS::Service
     Properties:
-      Cluster: !Ref Cluster
-      TaskDefinition: !Ref TaskDefinition
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref ECSTaskDefinition
       DesiredCount: 1
       LaunchType: EC2
       SchedulingStrategy: REPLICA
@@ -96,7 +94,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/ecs/${Name}-${DevEnvironment}
-      RetentionInDays: 15
+      RetentionInDays: 7
 
   ECSTaskRole:
     Type: AWS::IAM::Role

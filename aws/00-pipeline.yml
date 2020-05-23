@@ -117,28 +117,36 @@ Resources:
               InputArtifacts:
                 - Name: !Ref ProjectName
               RunOrder: 2
-        # - Name: "Deploy-Services"
-        #   Actions:
-        #     - Name: "Deploy-Services"
-        #       ActionTypeId:
-        #         Category: Deploy
-        #         Owner: AWS
-        #         Provider: CloudFormation
-        #         Version: "1"
-        #       Configuration:
-        #         ActionMode: CREATE_UPDATE
-        #         StackName: !Sub "${ProjectName}-deployServices-${BranchName}"
-        #         TemplatePath: !Sub "${ProjectName}::aws/03-services.yml"
-        #         Capabilities: "CAPABILITY_NAMED_IAM"
-        #         RoleArn: !GetAtt DeployRole.Arn
-        #         ParameterOverrides: !Sub |
-        #           {
-        #             "ProjectName": "${ProjectName}",
-        #             "BranchName": "${BranchName}"
-        #           }
-        #       InputArtifacts:
-        #         - Name: !Ref ProjectName
-        #       RunOrder: 3
+        - Name: "Deploy-Services"
+          Actions:
+            - Name: "Deploy-Services"
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: "1"
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub "${ProjectName}-services-${BranchName}"
+                TemplatePath: !Sub "${ProjectName}::aws/03-services.yml"
+                Capabilities: "CAPABILITY_NAMED_IAM"
+                RoleArn: !GetAtt DeployRole.Arn
+                ParameterOverrides: !Sub |
+                  {
+                    "ProjectName": "${ProjectName}",
+                    "BranchName": "${BranchName}",
+                    "ECRRepositoryName" : {
+                      "Fn::GetParam" : [
+                        "InfrastructureOutput",
+                        "InfrastructureOutput.json",
+                        "ECRRepositoryName"
+                      ]
+                    }
+                  }
+              InputArtifacts:
+                - Name: !Ref ProjectName
+                - Name: InfrastructureOutput
+              RunOrder: 3
       Tags:
         - Key: CreatedBy
           Value: joelbarenco
