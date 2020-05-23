@@ -10,6 +10,9 @@ Parameters:
   ECRRepositoryName:
     Type: String
     Description: "ECR repository where to push the docker image"
+  ECSClusterName:
+    Type: String
+    Description: "ECS cluster where to launch the task"
 
 Mappings:
   BranchName:
@@ -27,44 +30,14 @@ Mappings:
       TaskReservedMemory: 1024
 
 Resources:
-  ECSCluster:
-    Type: AWS::ECS::Cluster
-    Properties: 
-      Tags:
-        - Key: CreatedBy
-          Value: joelbarenco
-        - Key: Environment
-          Value: !Ref BranchName
-        - Key: Name
-          Value: !Sub ${ProjectName}-ecsCluster-${BranchName}
-        - Key: Product
-          Value: tbd
-        - Key: Project
-          Value: !Sub ${ProjectName}
-        - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi
-
   ECSService:
     Type: AWS::ECS::Service
     Properties:
-      Cluster: !Ref ECSCluster
+      Cluster: !Ref ECSClusterName
       TaskDefinition: !Ref ECSTaskDefinition
       DesiredCount: !FindInMap [ BranchName, !Ref BranchName, ServiceDesiredCount ]
       LaunchType: EC2
       SchedulingStrategy: REPLICA
-      Tags:
-        - Key: CreatedBy
-          Value: joelbarenco
-        - Key: Environment
-          Value: !Ref BranchName
-        - Key: Name
-          Value: !Sub ${ProjectName}-ecsService-${BranchName}
-        - Key: Product
-          Value: tbd
-        - Key: Project
-          Value: !Sub ${ProjectName}
-        - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi
 
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -91,19 +64,6 @@ Resources:
             Options:
               awslogs-group: !Ref LogGroup
               awslogs-region: !Ref 'AWS::Region'
-      Tags:
-        - Key: CreatedBy
-          Value: joelbarenco
-        - Key: Environment
-          Value: !Ref BranchName
-        - Key: Name
-          Value: !Sub ${ProjectName}-ecsTask-${BranchName}
-        - Key: Product
-          Value: tbd
-        - Key: Project
-          Value: !Sub ${ProjectName}
-        - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi
 
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -125,16 +85,3 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-      Tags:
-        - Key: CreatedBy
-          Value: joelbarenco
-        - Key: Environment
-          Value: !Ref BranchName
-        - Key: Name
-          Value: !Sub ${ProjectName}-ecsTaskRole-${BranchName}
-        - Key: Product
-          Value: tbd
-        - Key: Project
-          Value: !Sub ${ProjectName}
-        - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi

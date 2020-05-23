@@ -11,7 +11,7 @@ Parameters:
     AllowedValues:
       - "dev"
       - "uat"
-      - "prod"
+      - "master"
   ECRRepositoryName:
     Type: String
     Description: "ECR repository where to push the docker image"
@@ -45,19 +45,6 @@ Resources:
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source:
         Type: CODEPIPELINE
-      Tags:
-        - Key: CreatedBy
-          Value: joelbarenco
-        - Key: Environment
-          Value: !Ref BranchName
-        - Key: Name
-          Value: !Sub ${ProjectName}-codeBuildProject-${BranchName}
-        - Key: Product
-          Value: tbd
-        - Key: Project
-          Value: !Sub ${ProjectName}
-        - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi
 
   CodeBuildRole:
     Type: AWS::IAM::Role
@@ -83,16 +70,3 @@ Resources:
                 Action:
                   - ecr:*
                 Resource: "*"
-      Tags:
-        - Key: CreatedBy
-          Value: joelbarenco
-        - Key: Environment
-          Value: !Ref BranchName
-        - Key: Name
-          Value: !Sub ${ProjectName}-codeBuildIAMRole-${BranchName}
-        - Key: Product
-          Value: tbd
-        - Key: Project
-          Value: !Sub ${ProjectName}
-        - Key: Repo
-          Value: https://github.com/wantedmedia/movieapi
