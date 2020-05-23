@@ -11,6 +11,21 @@ Parameters:
     Type: String
     Description: "ECR repository where to push the docker image"
 
+Mappings:
+  BranchName:
+    dev:
+      ServiceDesiredCount: 1
+      TaskCpuUnits: 256
+      TaskReservedMemory: 256
+    uat:
+      ServiceDesiredCount: 1
+      TaskCpuUnits: 256
+      TaskReservedMemory: 256
+    prod:
+      ServiceDesiredCount: 2
+      TaskCpuUnits: 1024
+      TaskReservedMemory: 1024
+
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -34,7 +49,7 @@ Resources:
     Properties:
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref ECSTaskDefinition
-      DesiredCount: 1
+      DesiredCount: !FindInMap [ BranchName, !Ref BranchName, ServiceDesiredCount ]
       LaunchType: EC2
       SchedulingStrategy: REPLICA
       Tags:
@@ -60,6 +75,8 @@ Resources:
       ContainerDefinitions:
         - Name: !Ref ProjectName
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepositoryName}:latest"
+          Memory: !FindInMap [ BranchName, !Ref BranchName, TaskReservedMemory ]
+          Cpu: !FindInMap [ BranchName, !Ref BranchName, TaskCpuUnits ]
           Environment:
             - Name: NODE_ENV
               Value: production
