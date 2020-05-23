@@ -16,7 +16,7 @@ Parameters:
       - "master"
   Repo:
     Type: String
-    Default: "movieapi"
+    Default: "be-api-movie"
   GithubOAuthToken:
     Description: "The github OAUTH token to give codepipeline access to the gihub repo. To be provided when launching pipeline on the CLI - see https://docs.aws.amazon.com/codepipeline/latest/userguide/GitHub-create-personal-token-CLI.html" 
     Type: String
