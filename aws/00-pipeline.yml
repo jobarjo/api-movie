@@ -14,8 +14,13 @@ Parameters:
       - "dev"
       - "uat"
       - "master"
+  GitHubOwner:
+    Type: String
+    Description: "Owner of the github repo used for the source"
+    Default: "wantedmedia"
   Repo:
     Type: String
+    Description: "github repo used for the source"
     Default: "be-api-movie"
   GithubOAuthToken:
     Description: "The github OAUTH token to give codepipeline access to the gihub repo. To be provided when launching pipeline on the CLI - see https://docs.aws.amazon.com/codepipeline/latest/userguide/GitHub-create-personal-token-CLI.html" 
@@ -26,19 +31,6 @@ Parameters:
     Default: "be-awsInfra-networking-infra"
 
 Resources:
-  PipelineWebhook:
-    Type: AWS::CodePipeline::Webhook
-    Properties: 
-      Authentication: "UNAUTHENTICATED"
-      AuthenticationConfiguration: {}
-      Filters: 
-        - JsonPath: "$.ref"
-          MatchEquals: "refs/heads/{Branch}"
-      Name: !Sub "${ProjectName}-codePipelineWebhook-${BranchName}"
-      TargetAction: "SourceCode"
-      TargetPipeline: !Ref CodePipeline
-      TargetPipelineVersion: !GetAtt CodePipeline.Version
-
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -59,7 +51,7 @@ Resources:
                 Provider: GitHub
                 Version: "1"
               Configuration:
-                Owner: "wantedmedia"
+                Owner: !Ref GitHubOwner
                 Repo: !Ref Repo
                 Branch: !Ref BranchName
                 OAuthToken: !Ref GithubOAuthToken
@@ -173,6 +165,23 @@ Resources:
                 - Name: !Ref ProjectName
                 - Name: InfrastructureOutput
               RunOrder: 3
+
+  PipelineWebhook:
+    Type: AWS::CodePipeline::Webhook
+    Properties: 
+      # Authentication: "UNAUTHENTICATED"
+      # AuthenticationConfiguration: {}
+      Authentication: "GITHUB_HMAC"
+      AuthenticationConfiguration:
+        SecretToken: GithubOAuthToken
+      Filters: 
+        - JsonPath: "$.ref"
+          MatchEquals: "refs/heads/{Branch}"
+      Name: !Sub "${ProjectName}-githubWebhook-${BranchName}"
+      RegisterWithThirdParty: true
+      TargetAction: "SourceCode"
+      TargetPipeline: !Ref CodePipeline
+      TargetPipelineVersion: !GetAtt CodePipeline.Version
 
   CodePipelineRole:
     Type: AWS::IAM::Role
