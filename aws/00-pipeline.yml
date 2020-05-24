@@ -84,7 +84,7 @@ Resources:
                 ParameterOverrides: !Sub |
                   {
                     "BranchName": "${BranchName}",
-                    "ProjectName": "${ProjectName}"
+                    "ProjectName": "${ProjectName}",
                     "NetworkingStackName": "${NetworkingStackName}"
                   }
               InputArtifacts:
