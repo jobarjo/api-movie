@@ -35,6 +35,7 @@ Resources:
         - JsonPath: "$.ref"
           MatchEquals: "refs/heads/{Branch}"
       Name: !Sub "${ProjectName}-codePipelineWebhook-${BranchName}"
+      RegisterWithThirdParty: true
       TargetAction: "SourceCode"
       TargetPipeline: !Ref CodePipeline
       TargetPipelineVersion: !GetAtt CodePipeline.Version
@@ -77,6 +78,7 @@ Resources:
                 Version: "1"
               Configuration:
                 ActionMode: CREATE_UPDATE
+                Capabilities: "CAPABILITY_IAM"
                 OutputFileName: InfrastructureOutput.json
                 StackName: !Sub "${ProjectName}-infrastructure-${BranchName}"
                 TemplatePath: !Sub "${ProjectName}::aws/01-infrastructure.yml"
@@ -196,7 +198,6 @@ Resources:
                   - cloudformation:*
                   - iam:PassRole
                   - codebuild:*
-                  - codestar-connections:*
                 Resource: "*"
 
   DeployRole:
