@@ -22,8 +22,8 @@ Parameters:
     Type: String
   NetworkingStackName:
     Type: String
-    Description: Name of the CF stack, within the be-infrastructure-networking project, of the instrastrure codepipeline step
-    Default: "be-infrastructure-networking-infrastructure"
+    Description: Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-networking project
+    Default: "be-awsInfra-networking-infra"
 
 Resources:
   PipelineWebhook:
@@ -35,7 +35,6 @@ Resources:
         - JsonPath: "$.ref"
           MatchEquals: "refs/heads/{Branch}"
       Name: !Sub "${ProjectName}-codePipelineWebhook-${BranchName}"
-      RegisterWithThirdParty: true
       TargetAction: "SourceCode"
       TargetPipeline: !Ref CodePipeline
       TargetPipelineVersion: !GetAtt CodePipeline.Version
@@ -78,9 +77,9 @@ Resources:
                 Version: "1"
               Configuration:
                 ActionMode: CREATE_UPDATE
-                Capabilities: "CAPABILITY_IAM"
+                Capabilities: "CAPABILITY_NAMED_IAM"
                 OutputFileName: InfrastructureOutput.json
-                StackName: !Sub "${ProjectName}-infrastructure-${BranchName}"
+                StackName: !Sub "${ProjectName}-infra-${BranchName}"
                 TemplatePath: !Sub "${ProjectName}::aws/01-infrastructure.yml"
                 RoleArn: !GetAtt DeployRole.Arn
                 ParameterOverrides: !Sub |
