@@ -23,7 +23,7 @@ Parameters:
   NetworkingStackName:
     Type: String
     Description: Name of the CF stack, within the be-infrastructure-networking project, of the instrastrure codepipeline step
-    Default: be-infrastructure-networking-infrastructure
+    Default: "be-infrastructure-networking-infrastructure"
 
 Resources:
   PipelineWebhook:
