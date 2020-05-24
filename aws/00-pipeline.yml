@@ -27,7 +27,7 @@ Parameters:
     Type: String
   NetworkingStackName:
     Type: String
-    Description: Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-networking project
+    Description: "Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-networking project"
     Default: "be-awsInfra-networking-infra"
 
 Resources:
@@ -158,6 +158,13 @@ Resources:
                         "InfrastructureOutput",
                         "InfrastructureOutput.json",
                         "ECSClusterName"
+                      ]
+                    },
+                    "PublicLoadBalancerTargetGroupArn" : {
+                      "Fn::GetParam" : [
+                        "InfrastructureOutput",
+                        "InfrastructureOutput.json",
+                        "PublicLoadBalancerTargetGroupArn"
                       ]
                     }
                   }

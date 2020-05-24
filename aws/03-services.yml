@@ -13,6 +13,9 @@ Parameters:
   ECSClusterName:
     Type: String
     Description: "ECS cluster where to launch the task"
+  PublicLoadBalancerTargetGroupArn:
+    Type: String
+    Description: "ARN of the target group associated with the service"
 
 Mappings:
   BranchName:
@@ -34,10 +37,18 @@ Resources:
     Type: AWS::ECS::Service
     Properties:
       Cluster: !Ref ECSClusterName
-      TaskDefinition: !Ref ECSTaskDefinition
-      DesiredCount: !FindInMap [ BranchName, !Ref BranchName, ServiceDesiredCount ]
+      DesiredCount: !FindInMap [
+        BranchName,
+        !Ref BranchName,
+        ServiceDesiredCount
+      ]
       LaunchType: EC2
+      LoadBalancers:
+        - ContainerName: !Ref ProjectName
+          ContainerPort: 8080
+          TargetGroupArn: !Ref PublicLoadBalancerTargetGroupArn
       SchedulingStrategy: REPLICA
+      TaskDefinition: !Ref ECSTaskDefinition
 
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
