@@ -418,7 +418,7 @@ Outputs:
     Value: !Join ['', ['http://', !GetAtt 'PublicLoadBalancer.DNSName']]
     Export:
       Name: !Sub "${AWS::StackName}:ExternalUrl"
-  ECSRole:
+  ECSRoleArn:
     Description: The ARN of the ECS role
     Value: !GetAtt 'ECSRole.Arn'
     Export:
