@@ -166,6 +166,13 @@ Resources:
                         "InfrastructureOutput.json",
                         "PublicLoadBalancerTargetGroupArn"
                       ]
+                    },
+                    "ECSRoleArn" : {
+                      "Fn::GetParam" : [
+                        "InfrastructureOutput",
+                        "InfrastructureOutput.json",
+                        "ECSRoleArn"
+                      ]
                     }
                   }
               InputArtifacts:

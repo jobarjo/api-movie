@@ -89,7 +89,6 @@ Resources:
 
   ### Autoscaling group.
   # This launches the actual EC2 instances that will register themselves as members of the cluster, and run the docker containers.
-
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -113,7 +112,8 @@ Resources:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       ImageId: !Ref 'ECSAMI'
-      SecurityGroups: [!Ref 'EcsHostSecurityGroup']
+      SecurityGroups: 
+        - !Ref 'EcsHostSecurityGroup'
       InstanceType: !Ref 'InstanceType'
       IamInstanceProfile: !Ref 'EC2InstanceProfile'
       UserData:
@@ -151,7 +151,8 @@ Resources:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
-      Roles: [!Ref 'EC2Role']
+      Roles: 
+        - !Ref 'EC2Role'
 
   # Role for the EC2 hosts. This allows the ECS agent on the EC2 hosts
   # to communciate with the ECS control plane, as well as download the docker

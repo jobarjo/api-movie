@@ -16,6 +16,9 @@ Parameters:
   PublicLoadBalancerTargetGroupArn:
     Type: String
     Description: "ARN of the target group associated with the service"
+  ECSRoleArn:
+    Type: String
+    Description: "ARN of the IAM role "
 
 Mappings:
   BranchName:
@@ -48,6 +51,7 @@ Resources:
           ContainerPort: 8080
           TargetGroupArn: !Ref PublicLoadBalancerTargetGroupArn
       SchedulingStrategy: REPLICA
+      Role: !Ref ECSRoleArn
       TaskDefinition: !Ref ECSTaskDefinition
 
   ECSTaskDefinition:
