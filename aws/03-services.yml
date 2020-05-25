@@ -96,21 +96,14 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-
-      # Policies:
-      #   - PolicyName: "ECR-and-logs"
-      #     PolicyDocument:
-      #       Statement:
-      #         - Effect: Allow
-      #           Action:
-      #             - "ecr:GetDownloadUrlForLayer"
-      #             - "ecr:BatchGetImage"
-      #             # - "ecr:DescribeImages"
-      #             - "ecr:GetAuthorizationToken"
-      #             # - "ecr:DescribeRepositories"
-      #             # - "ecr:ListImages"
-      #             - "ecr:BatchCheckLayerAvailability"
-      #             - "logs:CreateLogStream"
-      #             - "logs:PutLogEvents"
-      #           Resource:
-      #             - "*"
+      Policies:
+        - PolicyName: "ECR-and-logs"
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ecr:DescribeImages"
+                  - "ecr:DescribeRepositories"
+                  - "ecr:ListImages"
+                Resource:
+                  - "*"
