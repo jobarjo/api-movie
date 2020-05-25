@@ -183,8 +183,6 @@ Resources:
   PipelineWebhook:
     Type: AWS::CodePipeline::Webhook
     Properties: 
-      # Authentication: "UNAUTHENTICATED"
-      # AuthenticationConfiguration: {}
       Authentication: "GITHUB_HMAC"
       AuthenticationConfiguration:
         SecretToken: GithubOAuthToken

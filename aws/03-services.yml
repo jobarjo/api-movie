@@ -18,7 +18,7 @@ Parameters:
     Description: "ARN of the target group associated with the service"
   ECSRoleArn:
     Type: String
-    Description: "ARN of the IAM role "
+    Description: "ARN of the ECS IAM role"
 
 Mappings:
   BranchName:
