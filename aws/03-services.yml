@@ -13,12 +13,31 @@ Parameters:
   ECSClusterName:
     Type: String
     Description: "ECS cluster where to launch the task"
-  PublicLoadBalancerTargetGroupArn:
+  # ECSRoleArn:
+  #   Type: String
+  #   Description: "ARN of the ECS IAM role"
+  ECSTaskCustomRole:
     Type: String
-    Description: "ARN of the target group associated with the service"
-  ECSRoleArn:
+    Default: ""
+    Description: (Optional) An IAM role to give the service's containers if the code within needs to access other AWS resources like S3 buckets, DynamoDB tables, etc
+  PublicLoadBalancerHTTPSListener:
     Type: String
-    Description: "ARN of the ECS IAM role"
+  PublicLoadBalancerHTTPListener:
+    Type: String
+  Path:
+    Type: String
+    Default: "*"
+    Description: A path on the public load balancer that this service should be connected to. Use * to send all load balancer traffic to this service.
+  Priority:
+    Type: Number
+    Default: 1
+    Description: The priority for the routing rule added to the load balancer. This only applies if there are multiple services which have been assigned to different paths on the load balancer.
+  NetworkingStackName:
+    Type: String
+    Description: "Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-networking project"
+
+Conditions:
+  HasCustomRole: !Not [ !Equals [!Ref 'ECSTaskCustomRole', ''] ]
 
 Mappings:
   BranchName:
@@ -37,9 +56,15 @@ Mappings:
 
 Resources:
   ECSService:
+    DependsOn:
+      - HTTPSLoadBalancerRule
+      - HTTPLoadBalancerRule
     Type: AWS::ECS::Service
     Properties:
       Cluster: !Ref ECSClusterName
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
       DesiredCount: !FindInMap [
         BranchName,
         !Ref BranchName,
@@ -47,31 +72,46 @@ Resources:
       ]
       LaunchType: EC2
       LoadBalancers:
-        - ContainerName: !Ref ProjectName
+        - ContainerName: !Sub "${ProjectName}-${BranchName}"
           ContainerPort: 8080
-          TargetGroupArn: !Ref PublicLoadBalancerTargetGroupArn
+          TargetGroupArn: !Ref LoadBalancerTargetGroup
       SchedulingStrategy: REPLICA
-      Role: !Ref ECSRoleArn
+      ServiceName: !Sub "${ProjectName}-${BranchName}"
+      # Role: !Ref ECSRoleArn
       TaskDefinition: !Ref ECSTaskDefinition
 
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      ExecutionRoleArn: !GetAtt ECSTaskRole.Arn
+      # ExecutionRoleArn: !GetAtt ECSTaskRole.Arn
       Family: !Sub "${ProjectName}-${BranchName}"
-      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+      Cpu: !FindInMap [
+        BranchName,
+        !Ref BranchName,
+        TaskCpuUnits
+      ]
+      Memory: !FindInMap [
+        BranchName,
+        !Ref BranchName,
+        TaskReservedMemory
+      ]
+      TaskRoleArn: 
+        Fn::If:
+          - 'HasCustomRole'
+          - !Ref 'ECSTaskCustomRole'
+          - !Ref "AWS::NoValue"
       ContainerDefinitions:
-        - Name: !Ref ProjectName
+        - Name: !Sub "${ProjectName}-${BranchName}"
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepositoryName}:latest"
-          Memory: !FindInMap [ BranchName, !Ref BranchName, TaskReservedMemory ]
           Cpu: !FindInMap [ BranchName, !Ref BranchName, TaskCpuUnits ]
+          Memory: !FindInMap [ BranchName, !Ref BranchName, TaskReservedMemory ]
           Environment:
             - Name: NODE_ENV
               Value: production
             - Name: DEV_ENV
               Value: !Ref BranchName
             - Name: SERVER_NAME
-              Value: !Ref ProjectName
+              Value: !Sub "${ProjectName}-${BranchName}"
           PortMappings:
             - ContainerPort: 8080
           LogConfiguration:
@@ -86,28 +126,74 @@ Resources:
       LogGroupName: !Sub /aws/ecs/${ProjectName}-${BranchName}
       RetentionInDays: 7
 
-  ECSTaskRole:
-    Type: AWS::IAM::Role
+  # Used for keeping track of all the tasks, and what IP addresses / port numbers they have. Most often this target group is just connected to an application load balancer, so it can automatically distribute traffic across all the targets.
+  LoadBalancerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-            Action:
-              - "sts:AssumeRole"
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-      Policies:
-        - PolicyName: "ECR-and-logs"
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "ecr:DescribeImages"
-                  - "ecr:DescribeRepositories"
-                  - "ecr:ListImages"
-                Resource:
-                  - "*"
+      TargetType: instance
+      Protocol: HTTP
+      Port: 8080
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /healthcheck
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      VpcId: 
+        Fn::ImportValue:
+          !Sub "${NetworkingStackName}:VPCId"
+
+  # Create a rule on the load balancer for routing traffic to the target group
+  HTTPSLoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'LoadBalancerTargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: path-pattern
+          Values:
+           - !Ref 'Path'
+      ListenerArn: !Ref PublicLoadBalancerHTTPSListener
+      Priority: !Ref 'Priority'
+
+  # Create a rule on the load balancer for routing traffic to the target group
+  HTTPLoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'LoadBalancerTargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: path-pattern
+          Values:
+           - !Ref 'Path'
+      ListenerArn: !Ref PublicLoadBalancerHTTPListener
+      Priority: !Ref 'Priority'
+
+  # ECSTaskRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service:
+  #               - ecs-tasks.amazonaws.com
+  #           Action:
+  #             - "sts:AssumeRole"
+  #     ManagedPolicyArns:
+  #       - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  #     Policies:
+  #       - PolicyName: "ECR-and-logs"
+  #         PolicyDocument:
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - "ecr:DescribeImages"
+  #                 - "ecr:DescribeRepositories"
+  #                 - "ecr:ListImages"
+  #               Resource:
+  #                 - "*"

@@ -160,18 +160,18 @@ Resources:
                         "ECSClusterName"
                       ]
                     },
-                    "PublicLoadBalancerTargetGroupArn" : {
+                    "PublicLoadBalancerHTTPListener" : {
                       "Fn::GetParam" : [
                         "InfrastructureOutput",
                         "InfrastructureOutput.json",
-                        "PublicLoadBalancerTargetGroupArn"
+                        "PublicLoadBalancerHTTPListener"
                       ]
                     },
-                    "ECSRoleArn" : {
+                    "PublicLoadBalancerHTTPSListener" : {
                       "Fn::GetParam" : [
                         "InfrastructureOutput",
                         "InfrastructureOutput.json",
-                        "ECSRoleArn"
+                        "PublicLoadBalancerHTTPSListener"
                       ]
                     }
                   }

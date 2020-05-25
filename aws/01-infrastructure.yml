@@ -23,14 +23,6 @@ Parameters:
     Type: String
     Description: "ARN of the www.wanted.com certificate imported into AWS       Certificate Manager" 
     Default: "arn:aws:acm:eu-west-1:073919355633:certificate/98f46434-d507-4049-9f46-03c001191b50"
-  Path:
-    Type: String
-    Default: "*"
-    Description: A path on the public load balancer that this service should be connected to. Use * to send all load balancer traffic to this service.
-  Priority:
-    Type: Number
-    Default: 1
-    Description: The priority for the routing rule added to the load balancer. This only applies if there are multiple services which have been assigned to different paths on the load balancer.
   DesiredCapacity:
     Type: Number
     Default: '1'
@@ -60,7 +52,8 @@ Resources:
     Type: AWS::ECS::Cluster
 
   # A security group for the EC2 hosts that will run the containers.
-  # Two rules, allowing network traffic from a public facing load balancer and from other hosts in the security group.
+  # Two rules, allowing network traffic from a public facing load balancer
+  # and from other hosts in the security group.
   #
   # If you want to make direct requests to a container using its
   # public IP address you'll need to add a security group rule
@@ -72,13 +65,24 @@ Resources:
       VpcId:
         Fn::ImportValue:
           !Sub "${NetworkingStackName}:VPCId"
-  EcsSecurityGroupIngressFromPublicALB:
+  EcsSecurityGroupHTTPIngressFromPublicALB:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Ingress from the public ALB
+      Description: HTTP Ingress from the public ALB
       GroupId: !Ref 'EcsHostSecurityGroup'
-      IpProtocol: "-1"
       SourceSecurityGroupId: !Ref 'PublicLoadBalancerSG'
+      IpProtocol: "tcp"
+      FromPort: 80
+      ToPort: 80
+  EcsSecurityGroupHTTPSIngressFromPublicALB:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: HTTPS Ingress from the public ALB
+      GroupId: !Ref 'EcsHostSecurityGroup'
+      SourceSecurityGroupId: !Ref 'PublicLoadBalancerSG'
+      IpProtocol: "tcp"
+      FromPort: 443
+      ToPort: 443
   EcsSecurityGroupIngressFromSelf:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -87,8 +91,8 @@ Resources:
       IpProtocol: "-1"
       SourceSecurityGroupId: !Ref 'EcsHostSecurityGroup'
 
-  ### Autoscaling group.
-  # This launches the actual EC2 instances that will register themselves as members of the cluster, and run the docker containers.
+  # Autoscaling group. This launches the actual EC2 instances that will register
+  # themselves as members of the cluster, and run the docker containers.
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -188,13 +192,10 @@ Resources:
             Resource: '*'
 
   ## LOAD BALANCER
-  # This sample template creates one load balancer:
   #
   # - One public load balancer, hosted in public subnets that is accessible
   #   to the public, and is intended to route traffic to one or more public
   #   facing services.
-
-  # A public facing load balancer, this is used for accepting traffic from the public internet and directing it to public facing services
   PublicLoadBalancer:
     DependsOn:
      - "ContentBucketPolicy"
@@ -215,6 +216,46 @@ Resources:
             !Sub "${NetworkingStackName}:PublicSubnetTwo"
       SecurityGroups: 
         - !Ref 'PublicLoadBalancerSG'
+  
+  # A dummy target group is used to setup the ALB to just drop traffic
+  # initially, before any real service target groups have been added.
+  DummyTargetGroupPublic:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 6
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Name: !Join ['-', [!Ref 'AWS::StackName', 'drop-1']]
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${NetworkingStackName}:VPCId"
+  
+  PublicLoadBalancerHTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref 'DummyTargetGroupPublic'
+          Type: 'forward'
+      LoadBalancerArn: !Ref 'PublicLoadBalancer'
+      Port: 80
+      Protocol: HTTP
+  
+  PublicLoadBalancerHTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Certificates:
+        - CertificateArn: !Ref WantedCertificateArn
+      DefaultActions:
+        - TargetGroupArn: !Ref 'DummyTargetGroupPublic'
+          Type: 'forward'
+      LoadBalancerArn: !Ref 'PublicLoadBalancer'
+      Port: 443
+      Protocol: HTTPS
 
   PublicLoadBalancerSG:
     Type: AWS::EC2::SecurityGroup
@@ -224,87 +265,9 @@ Resources:
         Fn::ImportValue:
           !Sub "${NetworkingStackName}:VPCId"
       SecurityGroupIngress:
-        - IpProtocol: "tcp"
-          Description: "Allow all traffic from HTTPS"
-          FromPort: 443
-          ToPort: 443
-          CidrIp: "0.0.0.0/0"
-        - IpProtocol: "tcp"
-          Description: "Allow all traffic from HTTP"
-          FromPort: 80
-          ToPort: 80
-          CidrIp: "0.0.0.0/0"
-
-  HTTPSLoadBalancerListener:
-    DependsOn:
-      - ECSRole
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      Certificates:
-        - CertificateArn: !Ref WantedCertificateArn
-      DefaultActions:
-        - TargetGroupArn: !Ref LoadBalancerTargetGroup
-          Type: forward
-      LoadBalancerArn: !Ref PublicLoadBalancer
-      Port: 443
-      Protocol: HTTPS
-
-  # Create a rule on the load balancer for routing traffic to the target group
-  HTTPSLoadBalancerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - TargetGroupArn: !Ref 'LoadBalancerTargetGroup'
-          Type: 'forward'
-      Conditions:
-        - Field: path-pattern
-          Values:
-           - !Ref 'Path'
-      ListenerArn: !Ref HTTPSLoadBalancerListener
-      Priority: !Ref 'Priority'
-
-  HTTPLoadBalancerListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref LoadBalancerTargetGroup
-          Type: forward
-      LoadBalancerArn: !Ref PublicLoadBalancer
-      Port: 80
-      Protocol: HTTP
-
-  # Create a rule on the load balancer for routing traffic to the target group
-  HTTPLoadBalancerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - TargetGroupArn: !Ref 'LoadBalancerTargetGroup'
-          Type: 'forward'
-      Conditions:
-        - Field: path-pattern
-          Values:
-           - !Ref 'Path'
-      ListenerArn: !Ref HTTPLoadBalancerListener
-      Priority: !Ref 'Priority'
-
-  # Used for keeping track of all the tasks, and what IP addresses / port numbers they have. Most often this target group is just connected to an application load balancer, so it can automatically distribute traffic across all the targets.
-  LoadBalancerTargetGroup:
-    DependsOn: [PublicLoadBalancer]
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      TargetType: instance
-      Protocol: HTTP
-      Port: 8080
-      HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: 30
-      HealthCheckPath: /healthcheck
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 2
-      UnhealthyThresholdCount: 3
-      VpcId: 
-        Fn::ImportValue:
-          !Sub "${NetworkingStackName}:VPCId"
+        - Description: "Allow all traffic - detailed ingress rules specficed in AWS::EC2::SecurityGroupIngress"
+          CidrIp: 0.0.0.0/0
+          IpProtocol: "-1"
 
   # S3 bucket for the ELB logs
   S3LogsBucket:
@@ -415,7 +378,7 @@ Outputs:
       Name: !Sub "${AWS::StackName}:ClusterName"
   ExternalUrl:
     Description: The url of the external load balancer
-    Value: !Join ['', ['http://', !GetAtt 'PublicLoadBalancer.DNSName']]
+    Value: !GetAtt 'PublicLoadBalancer.DNSName'
     Export:
       Name: !Sub "${AWS::StackName}:ExternalUrl"
   ECSRoleArn:
@@ -423,23 +386,13 @@ Outputs:
     Value: !GetAtt 'ECSRole.Arn'
     Export:
       Name: !Sub "${AWS::StackName}:ECSRole"
-  HTTPPublicListener:
-    Description: The ARN of the public load balancer's http Listener
-    Value: !Ref HTTPLoadBalancerListener
+  PublicLoadBalancerHTTPListener:
+    Description: The ARN of the public load balancer's HTTP Listener
+    Value: !Ref PublicLoadBalancerHTTPListener
     Export:
-      Name: !Sub "${AWS::StackName}:HTTPPublicListener"
-  HTTPSPublicListener:
-    Description: The ARN of the public load balancer's https Listener
-    Value: !Ref HTTPSLoadBalancerListener
+      Name: !Sub "${AWS::StackName}:PublicLoadBalancerHTTPListener"
+  PublicLoadBalancerHTTPSListener:
+    Description: The ARN of the public load balancer's HTTPS Listener
+    Value: !Ref 'PublicLoadBalancerHTTPSListener'
     Export:
-      Name: !Sub "${AWS::StackName}:HTTPSPublicListener"
-  PublicLoadBalancerTargetGroupArn:
-    Description: The ARN of the public load balancer's Listener
-    Value: !Ref PublicLoadBalancer
-    Export:
-      Name: !Sub "${AWS::StackName}:PublicALB"
-  ECSHostSecurityGroup:
-    Description: A security group used to allow containers to receive traffic
-    Value: !Ref 'EcsHostSecurityGroup'
-    Export:
-      Name: !Sub "${AWS::StackName}:EcsHostSecurityGroup"
+      Name: !Sub "${AWS::StackName}:PublicLoadBalancerHTTPSListener"
