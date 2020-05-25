@@ -146,6 +146,7 @@ Resources:
                   {
                     "ProjectName": "${ProjectName}",
                     "BranchName": "${BranchName}",
+                    "NetworkingStackName": "${NetworkingStackName}",
                     "ECRRepositoryName" : {
                       "Fn::GetParam" : [
                         "InfrastructureOutput",
