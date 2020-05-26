@@ -13,9 +13,6 @@ Parameters:
   ECSClusterName:
     Type: String
     Description: "ECS cluster where to launch the task"
-  # ECSRoleArn:
-  #   Type: String
-  #   Description: "ARN of the ECS IAM role"
   ECSTaskCustomRole:
     Type: String
     Default: ""
@@ -73,17 +70,15 @@ Resources:
       LaunchType: EC2
       LoadBalancers:
         - ContainerName: !Sub "${ProjectName}-${BranchName}"
-          ContainerPort: 8080
+          ContainerPort: 80
           TargetGroupArn: !Ref LoadBalancerTargetGroup
       SchedulingStrategy: REPLICA
       ServiceName: !Sub "${ProjectName}-${BranchName}"
-      # Role: !Ref ECSRoleArn
       TaskDefinition: !Ref ECSTaskDefinition
 
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      # ExecutionRoleArn: !GetAtt ECSTaskRole.Arn
       Family: !Sub "${ProjectName}-${BranchName}"
       Cpu: !FindInMap [
         BranchName,
@@ -113,7 +108,7 @@ Resources:
             - Name: SERVER_NAME
               Value: !Sub "${ProjectName}-${BranchName}"
           PortMappings:
-            - ContainerPort: 8080
+            - ContainerPort: 80
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -132,7 +127,7 @@ Resources:
     Properties:
       TargetType: instance
       Protocol: HTTP
-      Port: 8080
+      Port: 80
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 30
       HealthCheckPath: /healthcheck
@@ -171,29 +166,3 @@ Resources:
            - !Ref 'Path'
       ListenerArn: !Ref PublicLoadBalancerHTTPListener
       Priority: !Ref 'Priority'
-
-  # ECSTaskRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - ecs-tasks.amazonaws.com
-  #           Action:
-  #             - "sts:AssumeRole"
-  #     ManagedPolicyArns:
-  #       - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-  #     Policies:
-  #       - PolicyName: "ECR-and-logs"
-  #         PolicyDocument:
-  #           Statement:
-  #             - Effect: Allow
-  #               Action:
-  #                 - "ecr:DescribeImages"
-  #                 - "ecr:DescribeRepositories"
-  #                 - "ecr:ListImages"
-  #               Resource:
-  #                 - "*"

@@ -47,6 +47,7 @@ None.
   - Create a machine user to limit access to github
   - use secret manager for github token
   - add grafana dashboards
+  - move to Publicly Exposed Service with Private Networking - explained [here](https://github.com/awslabs/aws-cloudformation-templates/tree/master/aws/services/ECS)
 * Review eslint policy with airbnb
 * Add unit tests
 * Scaling: route53 DNS alias
