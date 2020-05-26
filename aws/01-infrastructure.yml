@@ -65,24 +65,13 @@ Resources:
       VpcId:
         Fn::ImportValue:
           !Sub "${NetworkingStackName}:VPCId"
-  EcsSecurityGroupHTTPIngressFromPublicALB:
+  EcsSecurityGroupIngressFromPublicALB:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: HTTP Ingress from the public ALB
+      Description: Ingress from the public ALB
       GroupId: !Ref 'EcsHostSecurityGroup'
       SourceSecurityGroupId: !Ref 'PublicLoadBalancerSG'
-      IpProtocol: "tcp"
-      FromPort: 80
-      ToPort: 80
-  EcsSecurityGroupHTTPSIngressFromPublicALB:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: HTTPS Ingress from the public ALB
-      GroupId: !Ref 'EcsHostSecurityGroup'
-      SourceSecurityGroupId: !Ref 'PublicLoadBalancerSG'
-      IpProtocol: "tcp"
-      FromPort: 443
-      ToPort: 443
+      IpProtocol: "-1"
   EcsSecurityGroupIngressFromSelf:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -259,12 +248,12 @@ Resources:
   PublicLoadBalancerSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allows any HTTP/S access to the public facing load balancer
+      GroupDescription: Access to the public facing load balancer
       VpcId: 
         Fn::ImportValue:
           !Sub "${NetworkingStackName}:VPCId"
       SecurityGroupIngress:
-        - Description: "Allow all traffic - detailed ingress rules specficed in AWS::EC2::SecurityGroupIngress"
+        - Description: "Allow access to ALB from anywhere on the internet"
           CidrIp: 0.0.0.0/0
           IpProtocol: "-1"
 
