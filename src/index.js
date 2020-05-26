@@ -12,7 +12,7 @@ const app = (config) => {
     
     server.use(restify.plugins.queryParser());
 
-    server.get('/healthcheck', healthcheck(server));
+    server.get('/', healthcheck(server));
 
     server.get('/rating/:id', getRating);
 

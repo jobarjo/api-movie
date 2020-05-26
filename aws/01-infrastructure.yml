@@ -256,6 +256,16 @@ Resources:
         - Description: "Allow access to ALB from anywhere on the internet"
           CidrIp: 0.0.0.0/0
           IpProtocol: "-1"
+        # - IpProtocol: "tcp"
+        #   Description: "Allow all traffic from HTTPS"
+        #   FromPort: 443
+        #   ToPort: 443
+        #   CidrIp: "0.0.0.0/0"
+        # - IpProtocol: "tcp"
+        #   Description: "Allow all traffic from HTTP"
+        #   FromPort: 80
+        #   ToPort: 80
+        #   CidrIp: "0.0.0.0/0"
 
   # S3 bucket for the ELB logs
   S3LogsBucket:
