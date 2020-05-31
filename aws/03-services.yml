@@ -107,6 +107,8 @@ Resources:
               Value: !Ref BranchName
             - Name: SERVER_NAME
               Value: !Sub "${ProjectName}-${BranchName}"
+            - Name: SERVER_PORT
+              Value: "80"
           PortMappings:
             - ContainerPort: 80
           LogConfiguration:
