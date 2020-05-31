@@ -1,5 +1,4 @@
 const hl = require('highland');
-// const R = require('ramda');
 const { serializeError } = require('serialize-error');
 const utils = require('./utils');
 
