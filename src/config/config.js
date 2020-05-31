@@ -1,7 +1,7 @@
 module.exports = {
   server: {
     host: process.env.HOST || 'localhost',
-    port: Number(process.env.PORT) || 8080,
+    port: 80,
     name: process.env.SERVER_NAME || 'be-api-movie',
   },
   logging: {
