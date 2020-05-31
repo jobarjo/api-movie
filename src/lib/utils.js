@@ -1,21 +1,23 @@
-const restifyErrors = require('restify-errors');
+const { serializeError } = require('serialize-error');
 const imdb = require('imdb');
 const fa = require('faparser');
 const hl = require('highland');
 const R = require('ramda');
 
 module.exports = {
-  getImdbRating: (id) => imdb(id, (err, data) => {
-    if (err) {
-      const error = `Error fetching IMDB movie with id: ${id}; error: ${restifyErrors(err)}`;
-      console.log(error);
-      return undefined;
-    }
+  getImdbRating: (logger, id) => hl.wrapCallback(imdb)(id)
+    .map(R.path(['rating']))
+    .errors((err) => {
+      const message = `Error fetching IMDB movie with id: ${id}`;
+      logger.error(message, { error: serializeError(err) });
+    })
+    .otherwise(hl((push) => {
+      logger.debug(`No movies found on IMDB with id: ${id}`);
+      push(null, '');
+      push(null, hl.nil);
+    })),
 
-    return data.rating;
-  }),
-
-  getFilmAffinityRating: (title, year) => {
+  getFilmAffinityRating: (logger, title, year) => {
     const search = {
       query: title,
       lang: 'uk',
@@ -23,39 +25,39 @@ module.exports = {
       start: 0,
     };
 
-    hl(fa.search(search))
-      .errors((err) => {
-        const error = `Error searching FilmAffinity with title: ${title} and year: ${year}; error: ${restifyErrors(err)}`;
-        console.log(error);
-      })
+    return hl(fa.search(search))
       .map(R.path(['result']))
       .sequence()
       .filter(filterByYear(year))
+      .filter(filterByTitle(title))
+      .map(R.path(['rating']))
+      .errors((err) => {
+        const message = `Error searching FilmAffinity with title: ${title} and year: ${year}`;
+        logger.error(message, { error: serializeError(err) });
+      })
       .collect()
-      .toCallback((err, data) => {
-        if (data.length === 0) {
-          const error = `Error. No result from FilmAffinity search with title: ${title} and year: ${year}`;
-          console.log(error);
-          return undefined;
-        }
-
-        if (data.length > 1) {
-          const error = `Error. Several results from FilmAffinity search with title: ${title} and year: ${year}`;
-          console.log(error);
-          return undefined;
-        }
-
-        return R.compose(
-          R.path(['rating']),
-          R.head(data),
-        );
-      });
+      .filter((results) => results.length === 1)
+      .otherwise(hl((push) => {
+        logger.debug(`Cannot process film affinity results. 0 or several movies found for title: ${title} and year: ${year}`);
+        push(null, ['']);
+        push(null, hl.nil);
+      }))
+      .map(R.head);
   },
 };
 
+function filterByTitle(title) {
+  return R.compose(
+    R.equals(R.toLower(title)),
+    R.toLower,
+    R.path(['title']),
+  );
+}
+
 function filterByYear(year) {
   return R.compose(
-    R.equals(year),
+    R.equals(Number(year)),
+    (imdbYear) => Number(imdbYear),
     R.path(['year']),
   );
 }

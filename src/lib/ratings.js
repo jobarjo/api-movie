@@ -1,17 +1,25 @@
 const hl = require('highland');
-const R = require('ramda');
+// const R = require('ramda');
+const { serializeError } = require('serialize-error');
 const utils = require('./utils');
 
-module.exports = (req, res) => {
+module.exports = (logger) => (req, res) => {
   const { id, title, year } = req.query;
 
   hl([
-    utils.getImdbRating(id),
-    utils.getFilmAffinityRating(title, year),
+    utils.getImdbRating(logger, id),
+    utils.getFilmAffinityRating(logger, title, year),
   ])
-    .reject(R.isNil)
-    .otherwise()
+    .parallel(2)
+    .errors((err) => {
+      const message = 'Error fetching movie data';
+      logger.error(message, { error: serializeError(err) });
+    })
     .collect()
-    .map()
-    .toCallback((err, data) => res.json(data));
+    .toCallback((err, data) => {
+      res.json({
+        imdb: data[0],
+        filmAffinity: data[1],
+      });
+    });
 };

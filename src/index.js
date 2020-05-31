@@ -1,10 +1,13 @@
-
 const restify = require('restify');
-
 const getRatings = require('./lib/ratings');
 const healthcheck = require('./lib/healthcheck');
-
 const appConfig = require('./config/config');
+const LoggerFactory = require('./utils/logger');
+
+const logger = LoggerFactory.create({
+  enabled: appConfig.logging.enabled,
+  defaultMeta: { service: appConfig.server.name },
+});
 
 const app = (config) => {
   const server = restify.createServer({ name: config.server.name });
@@ -13,7 +16,7 @@ const app = (config) => {
 
   server.get('/', healthcheck(server));
 
-  server.get('/ratings', getRatings);
+  server.get('/ratings', getRatings(logger));
 
   return server;
 };
@@ -24,8 +27,7 @@ if (require.main === module) {
   server = app(appConfig);
 
   server.listen(appConfig.server.port, () => {
-    console.log('url: ', appConfig.server.host);
-    console.log('server listening', { server_url: server.url });
+    logger.info('server listening', { server_url: server.url });
   });
 }
 
