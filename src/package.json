@@ -1,6 +1,6 @@
 {
   "name": "be-api-movie",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Wanted Movie API",
   "main": "index.js",
   "scripts": {

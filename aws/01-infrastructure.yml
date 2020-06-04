@@ -46,7 +46,7 @@ Resources:
     Type: AWS::ECR::Repository
     # Properties:
       # LifecyclePolicy: TBD
-      ## check: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
+      ## TODO: aadd a policy - check: https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
 
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -110,7 +110,7 @@ Resources:
       InstanceType: !Ref 'InstanceType'
       IamInstanceProfile: !Ref 'EC2InstanceProfile'
       UserData:
-        # will add instance to cluster
+        # This script will add the instance to the cluster
         Fn::Base64: !Sub |
           #!/bin/bash -xe
           echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
@@ -256,6 +256,7 @@ Resources:
         - Description: "Allow access to ALB from anywhere on the internet"
           CidrIp: 0.0.0.0/0
           IpProtocol: "-1"
+        ## TODO: Find out why the below is not working
         # - IpProtocol: "tcp"
         #   Description: "Allow all traffic from HTTPS"
         #   FromPort: 443
