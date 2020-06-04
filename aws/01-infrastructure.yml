@@ -15,14 +15,14 @@ Parameters:
   AWSELBId:
     Type: String
     Description: "AWS account IDs to use in place of elb-account-id in the S3 bucket policy for ELB logs. The id is region-dependent and the default id is for the region eu-west-1."
-    Default: "156460612806"
+    Default: "redacted"
   NetworkingStackName:
     Type: String
     Description: "Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-networking project"
   WantedCertificateArn:
     Type: String
     Description: "ARN of the www.wanted.com certificate imported into AWS       Certificate Manager" 
-    Default: "arn:aws:acm:eu-west-1:073919355633:certificate/98f46434-d507-4049-9f46-03c001191b50"
+    Default: "redacted"
   DesiredCapacity:
     Type: Number
     Default: '1'

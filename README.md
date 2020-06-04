@@ -4,7 +4,7 @@ API retuning movie information from IMDB and film affinity.
 
 ## API endpoints
 
-- `GET /rating/:imdbId`
+- `GET /ratings?id=__id__&title=__title__&year=__year__`
 
 ## Infrastructure
 
